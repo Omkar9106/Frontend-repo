@@ -1,0 +1,279 @@
+/* Status Animations for Medicine Detection */
+
+/* Green Pulse Animation for Real Medicines */
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+/* Red Shake Animation for Fake Medicines */
+@keyframes shake-red {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+  25%, 75% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  }
+}
+
+.animate-shake-red {
+  animation: shake-red 0.8s infinite;
+}
+
+/* Yellow Warning Glow for Suspicious Medicines */
+@keyframes glow-yellow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(250, 204, 21, 0.3);
+    border-color: rgba(250, 204, 21, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+    border-color: rgba(250, 204, 21, 0.8);
+  }
+}
+
+.animate-glow-yellow {
+  animation: glow-yellow 2s infinite;
+}
+
+/* Card Level Animations */
+
+/* Card Pulse for Real Status */
+@keyframes card-pulse-green {
+  0%, 100% {
+    border-color: rgba(34, 197, 94, 0.3);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.1);
+  }
+  50% {
+    border-color: rgba(34, 197, 94, 0.6);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+  }
+}
+
+.animate-card-pulse-green {
+  animation: card-pulse-green 3s infinite;
+}
+
+/* Card Shake for Fake Status */
+@keyframes card-shake-red {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-1px) translateY(-1px);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(1px) translateY(1px);
+    border-color: rgba(239, 68, 68, 0.8);
+  }
+  25%, 75% {
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.animate-card-shake-red {
+  animation: card-shake-red 1.5s infinite;
+}
+
+/* Card Glow for Suspicious Status */
+@keyframes card-glow-yellow {
+  0%, 100% {
+    border-color: rgba(250, 204, 21, 0.3);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.1);
+  }
+  50% {
+    border-color: rgba(250, 204, 21, 0.7);
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.3);
+  }
+}
+
+.animate-card-glow-yellow {
+  animation: card-glow-yellow 2.5s infinite;
+}
+
+/* Confidence Bar Animations */
+
+@keyframes bar-pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.8);
+  }
+}
+
+.animate-bar-pulse-green {
+  animation: bar-pulse-green 2s infinite;
+}
+
+@keyframes bar-pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.animate-bar-pulse-red {
+  animation: bar-pulse-red 1.5s infinite;
+}
+
+@keyframes bar-pulse-yellow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(250, 204, 21, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.8);
+  }
+}
+
+.animate-bar-pulse-yellow {
+  animation: bar-pulse-yellow 2s infinite;
+}
+
+/* Subtle Background Animations */
+
+@keyframes bg-pulse-green {
+  0%, 100% {
+    background-color: rgba(34, 197, 94, 0.05);
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.1);
+  }
+}
+
+.bg-pulse-green {
+  animation: bg-pulse-green 3s infinite;
+}
+
+@keyframes bg-pulse-red {
+  0%, 100% {
+    background-color: rgba(239, 68, 68, 0.05);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.bg-pulse-red {
+  animation: bg-pulse-red 2s infinite;
+}
+
+@keyframes bg-glow-yellow {
+  0%, 100% {
+    background-color: rgba(250, 204, 21, 0.05);
+  }
+  50% {
+    background-color: rgba(250, 204, 21, 0.12);
+  }
+}
+
+.bg-glow-yellow {
+  animation: bg-glow-yellow 2.5s infinite;
+}
+
+/* Icon Specific Animations */
+
+@keyframes icon-check-green {
+  0%, 100% {
+    transform: scale(1);
+    color: rgb(74, 222, 128);
+  }
+  50% {
+    transform: scale(1.1);
+    color: rgb(34, 197, 94);
+  }
+}
+
+.icon-check-green {
+  animation: icon-check-green 2s infinite;
+}
+
+@keyframes icon-alert-red {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    color: rgb(248, 113, 113);
+  }
+  25% {
+    transform: scale(1.1) rotate(-5deg);
+    color: rgb(239, 68, 68);
+  }
+  75% {
+    transform: scale(1.1) rotate(5deg);
+    color: rgb(239, 68, 68);
+  }
+}
+
+.icon-alert-red {
+  animation: icon-alert-red 0.8s infinite;
+}
+
+@keyframes icon-warning-yellow {
+  0%, 100% {
+    transform: scale(1);
+    color: rgb(253, 224, 71);
+    filter: drop-shadow(0 0 3px rgba(250, 204, 21, 0.3));
+  }
+  50% {
+    transform: scale(1.05);
+    color: rgb(250, 204, 21);
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.6));
+  }
+}
+
+.icon-warning-yellow {
+  animation: icon-warning-yellow 2s infinite;
+}
+
+/* Responsive Animation Adjustments */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-green,
+  .animate-shake-red,
+  .animate-glow-yellow,
+  .animate-card-pulse-green,
+  .animate-card-shake-red,
+  .animate-card-glow-yellow,
+  .animate-bar-pulse-green,
+  .animate-bar-pulse-red,
+  .animate-bar-pulse-yellow,
+  .bg-pulse-green,
+  .bg-pulse-red,
+  .bg-glow-yellow,
+  .icon-check-green,
+  .icon-alert-red,
+  .icon-warning-yellow {
+    animation: none;
+  }
+}
+
+/* Smooth Transitions */
+.status-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+.status-transition-fast {
+  transition: all 0.15s ease-in-out;
+}
+
+.status-transition-slow {
+  transition: all 0.5s ease-in-out;
+}
