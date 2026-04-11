@@ -179,15 +179,21 @@ export default function ScanPage() {
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
       console.log("[FRONTEND DEBUG] Sending fetch request...");
-      const response = await fetch('http://127.0.0.1:8000/scan', {
+      console.log("[FRONTEND DEBUG] Request URL: /api/v1/scan");
+      console.log("[FRONTEND DEBUG] Request method: POST");
+      console.log("[FRONTEND DEBUG] Request body type:", formData.constructor.name);
+      console.log("[FRONTEND DEBUG] FormData entries count:", formData.entries.length);
+      
+      const response = await fetch('/api/v1/scan', {
         method: 'POST',
         body: formData,
         signal: controller.signal,
         // Note: Don't set Content-Type header - browser will set multipart/form-data with boundary
       });
-
+      
       clearTimeout(timeoutId);
-
+      
+      console.log("[FRONTEND DEBUG] Fetch completed, response received");
       console.log("[FRONTEND DEBUG] Response received:", response.status, response.statusText);
       console.log("[FRONTEND DEBUG] Response headers:", Object.fromEntries(response.headers.entries()));
 
@@ -225,23 +231,76 @@ export default function ScanPage() {
       sessionStorage.setItem("scanResult", JSON.stringify(enhancedResult));
       console.log('Stored in sessionStorage:', JSON.parse(sessionStorage.getItem('scanResult') || '{}'));
       
+      // Save to backend database (non-blocking)
+      const saveToBackend = async () => {
+        try {
+          console.log('Saving scan to backend database...');
+          
+          // Prepare save data with all required fields
+          const saveData = {
+            medicine: result.medicine || 'Unknown',
+            status: result.status || 'unknown',
+            confidence: result.confidence || '0%',
+            batch_number: result.batch_number || null,
+            expiry_date: result.expiry_date || null,
+            extracted_text: result.extracted_text || '',
+            extraction_method: result.extraction_method || 'ocr',
+            processing_time: result.processing_time || '0s',
+            extraction_confidence: result.extraction_confidence || null,
+            reason: result.reason || 'Scan completed',
+            fake_indicators: result.fake_indicators || [],
+            file_name: uploadedFile?.name || 'camera_capture.jpg',
+            file_size: uploadedFile?.size || null,
+            user_id: null
+          };
+          
+          console.log('Save data prepared:', saveData);
+          
+          const saveResponse = await fetch('/api/v1/save-scan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(saveData)
+          });
+          
+          console.log('Save response status:', saveResponse.status);
+          
+          if (saveResponse.ok) {
+            const saveResult = await saveResponse.json();
+            console.log('Scan successfully saved to backend database:', saveResult);
+            // Notify dashboard that new scan was added
+            const timestamp = Date.now().toString();
+            sessionStorage.setItem('newScanAdded', timestamp);
+            sessionStorage.setItem('lastScanTimestamp', timestamp);
+          } else {
+            const errorText = await saveResponse.text();
+            console.error('Failed to save scan to backend:', saveResponse.status, errorText);
+            console.error('Error details:', errorText);
+          }
+        } catch (error) {
+          console.error('Error saving scan to backend:', error);
+        }
+      };
+      
+      // Save to backend in background (don't wait for it)
+      saveToBackend();
+      
       // Store enhanced scan data using storage utility with fallback
       const stored = storeScanResult(enhancedResult);
       
       // Notify dashboard that new scan was added (multiple methods)
-      const timestamp = Date.now().toString();
-      sessionStorage.setItem('newScanAdded', timestamp);
-      sessionStorage.setItem('lastScanTimestamp', timestamp);
+      const notificationTimestamp = Date.now().toString();
       
       // Method 1: Storage event
       window.dispatchEvent(new StorageEvent('newScanAdded', {
         key: 'newScanAdded',
-        newValue: timestamp
+        newValue: notificationTimestamp
       }));
       
       // Method 2: Custom event
       window.dispatchEvent(new CustomEvent('newScan', {
-        detail: { timestamp, result }
+        detail: { timestamp: notificationTimestamp, result }
       }));
       
       // Method 3: Direct storage update
@@ -250,7 +309,7 @@ export default function ScanPage() {
       console.log('Scan completed, notifications sent:', {
         storageEvent: true,
         customEvent: true,
-        timestamp: timestamp
+        timestamp: notificationTimestamp
       });
       
       if (stored) {

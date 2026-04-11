@@ -29,10 +29,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto text-center">
           <div className={`transition-all duration-1000 delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                AI Health Surveillance
-              </span>
-              <br />
+              <div className="flex items-center justify-center mb-4">
+                <FiShield className="w-12 h-12 text-emerald-400 mr-4" />
+                <span className="bg-gradient-to-r from-emerald-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                  AI Health Surveillance
+                </span>
+              </div>
               <span className="text-2xl md:text-3xl text-gray-300 font-light">for Public Health Safety</span>
             </h1>
             
@@ -140,7 +142,7 @@ export default function Home() {
       <footer className="relative z-10 px-8 py-12">
         <div className="max-w-7xl mx-auto text-center">
           <div className="text-gray-400">
-            © 2024 AI Health Surveillance System. All rights reserved.
+            © 2026 AI Health Surveillance System. All rights reserved.
           </div>
         </div>
       </footer>

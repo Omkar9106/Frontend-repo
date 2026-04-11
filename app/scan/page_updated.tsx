@@ -122,7 +122,7 @@ export default function ScanPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
-      const response = await fetch('http://127.0.0.1:8000/scan', {
+      const response = await fetch('/api/v1/scan', {
         method: 'POST',
         body: formData,
         signal: controller.signal,
@@ -141,7 +141,7 @@ export default function ScanPage() {
       
       // Save to MongoDB (non-blocking)
       try {
-        const saveResponse = await fetch('http://127.0.0.1:8000/api/save-scan', {
+        const saveResponse = await fetch('/api/v1/save-scan', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

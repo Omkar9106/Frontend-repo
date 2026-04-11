@@ -1,0 +1,412 @@
+/* Mobile-specific styles for AI Health Surveillance System */
+
+/* Base mobile styles */
+@media (max-width: 1024px) {
+  /* Hide desktop sidebar on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Mobile-only content */
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Tablet-specific adjustments */
+  .main-content {
+    padding: 1rem;
+  }
+  
+  /* Adjust card layouts for tablet */
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile phone styles */
+@media (max-width: 768px) {
+  /* Ensure proper viewport sizing */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    min-height: 100vh;
+  }
+  
+  /* Mobile typography */
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+  
+  p, span, div {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+  
+  /* Mobile spacing */
+  .container {
+    padding: 0.75rem;
+  }
+  
+  .p-4 {
+    padding: 0.75rem !important;
+  }
+  
+  .p-6 {
+    padding: 1rem !important;
+  }
+  
+  .px-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  .py-4 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  
+  /* Mobile grid adjustments */
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Mobile card adjustments */
+  .card {
+    margin: 0.5rem 0;
+    border-radius: 0.75rem;
+  }
+  
+  .card-content {
+    padding: 1rem;
+  }
+  
+  /* Mobile button adjustments */
+  .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Mobile form adjustments */
+  .form-input {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+  }
+  
+  .form-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Mobile table adjustments */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table {
+    min-width: 600px;
+    font-size: 0.75rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem;
+  }
+  
+  /* Mobile modal adjustments */
+  .modal {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+    border-radius: 1rem;
+  }
+  
+  .modal-content {
+    padding: 1.5rem;
+  }
+  
+  /* Mobile navigation adjustments */
+  .nav-item {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .nav-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  /* Mobile dashboard adjustments */
+  .dashboard-card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .dashboard-chart {
+    height: 200px;
+  }
+  
+  /* Mobile scan page adjustments */
+  .scan-container {
+    padding: 1rem;
+  }
+  
+  .scan-upload-area {
+    min-height: 150px;
+    border-radius: 1rem;
+  }
+  
+  .scan-button {
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+  }
+  
+  /* Mobile analytics adjustments */
+  .analytics-card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+  
+  .analytics-chart {
+    height: 200px;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  
+  /* Mobile medicines page adjustments */
+  .medicines-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .medicines-card {
+    padding: 1rem;
+  }
+  
+  /* Mobile results page adjustments */
+  .results-container {
+    padding: 1rem;
+  }
+  
+  .results-card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+  
+  /* Mobile alert adjustments */
+  .alert {
+    margin: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Mobile loading adjustments */
+  .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .loading-text {
+    font-size: 0.875rem;
+  }
+  
+  /* Mobile footer adjustments */
+  .footer {
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .footer-text {
+    font-size: 0.75rem;
+  }
+  
+  /* Touch-friendly adjustments */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile animations */
+  .mobile-animation {
+    animation-duration: 0.3s;
+  }
+  
+  /* Mobile-specific utilities */
+  .mobile-hidden {
+    display: none !important;
+  }
+  
+  .mobile-visible {
+    display: block !important;
+  }
+  
+  /* Mobile scroll behavior */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile safe area adjustments */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Small mobile phones */
+@media (max-width: 480px) {
+  /* Extra small phone adjustments */
+  h1 {
+    font-size: 1.25rem;
+  }
+  
+  h2 {
+    font-size: 1.125rem;
+  }
+  
+  .container {
+    padding: 0.5rem;
+  }
+  
+  .card {
+    margin: 0.25rem 0;
+    padding: 0.75rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .medicines-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .nav-item {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .nav-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-landscape-hidden {
+    display: none !important;
+  }
+  
+  .mobile-landscape-visible {
+    display: block !important;
+  }
+  
+  /* Adjust for landscape mode */
+  .scan-container {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .analytics-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Dark mode mobile adjustments */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .mobile-dark-mode {
+    background-color: #0a0a0a;
+    color: #ffffff;
+  }
+  
+  .mobile-dark-mode .card {
+    background-color: #1a1a1a;
+    border-color: #333333;
+  }
+  
+  .mobile-dark-mode .btn {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border-color: #333333;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

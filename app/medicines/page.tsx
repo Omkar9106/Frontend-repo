@@ -98,7 +98,7 @@ export default function MedicinesPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://127.0.0.1:8001/api/v1/medicines');
+      const response = await fetch('/api/v1/medicines');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch medicines: ${response.status}`);
@@ -203,7 +203,7 @@ export default function MedicinesPage() {
     
     // Fetch recent scans for this medicine
     try {
-      const response = await fetch(`http://127.0.0.1:8001/api/v1/scans?medicine=${encodeURIComponent(medicine.name)}&limit=5`);
+      const response = await fetch(`/api/v1/scans?medicine=${encodeURIComponent(medicine.name)}&limit=5`);
       if (response.ok) {
         const data = await response.json();
         const scans: ScanHistory[] = Array.isArray(data) ? data : (data.scans || []);
@@ -218,7 +218,7 @@ export default function MedicinesPage() {
   const handleDeleteMedicine = async (medicine: Medicine) => {
     if (window.confirm(`Are you sure you want to delete all scans for ${medicine.name}?`)) {
       try {
-        const response = await fetch(`http://127.0.0.1:8001/api/v1/medicines/${encodeURIComponent(medicine.name)}`, {
+        const response = await fetch(`/api/v1/medicines/${encodeURIComponent(medicine.name)}`, {
           method: 'DELETE'
         });
 

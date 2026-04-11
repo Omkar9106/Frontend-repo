@@ -28,7 +28,7 @@ app.include_router(medicines_router)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8001", "http://127.0.0.1:8001"],  # Next.js and testing ports
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8001", "http://127.0.0.1:8001", "http://localhost:3001", "http://127.0.0.1:3001", "http://localhost:3020", "http://127.0.0.1:3020"],  # Next.js and testing ports
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -413,6 +413,16 @@ def production_verify_authenticity(extraction: MedicineExtraction, text: str) ->
             "fake_indicators": ["Processing error"],
             "extraction_confidence": "0%"
         }
+
+@app.get("/health")
+async def health_check():
+    """Simple health check endpoint"""
+    return {"status": "healthy", "timestamp": time.time()}
+
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint that doesn't require database"""
+    return {"message": "Backend is working!", "status": "ok", "timestamp": time.time()}
 
 @app.post("/test-ocr")
 async def test_ocr_simple(file: UploadFile = File(...)):

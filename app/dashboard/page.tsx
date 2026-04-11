@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { FiClock, FiAlertCircle, FiRefreshCw, FiSearch, FiTrendingUp, FiActivity, FiShield, FiCheckCircle, FiXCircle, FiAlertTriangle } from "react-icons/fi";
+import { getFullScanHistory } from "../utils/storage";
 
 // API Response interface
 interface ScanHistory {
@@ -37,6 +38,33 @@ interface Trends {
   most_frequent: TrendData[];
   most_suspicious: TrendData[];
   last_updated: string;
+}
+
+interface StorageScanData {
+  scan_id?: string | number;
+  medicine?: string;
+  status?: string;
+  confidence?: string | number;
+  timestamp?: string;
+  location?: string;
+}
+
+interface BackendScanData {
+  _id?: string;
+  id?: string;
+  medicine?: string;
+  status?: string;
+  confidence?: string;
+  batch_number?: string | null;
+  expiry_date?: string | null;
+  extracted_text?: string;
+  extraction_method?: string;
+  processing_time?: string;
+  extraction_confidence?: string | null;
+  reason?: string;
+  fake_indicators?: string[];
+  timestamp?: string;
+  file_name?: string | null;
 }
 
 interface DashboardState {
@@ -76,6 +104,170 @@ export default function DashboardPage() {
       last_updated: ""
     }
   });
+
+  const fetchScanHistory = useCallback(async () => {
+    try {
+      // Use setTimeout to make setState asynchronous
+      setTimeout(() => {
+        setState(prev => ({ ...prev, loading: true, error: null }));
+      }, 0);
+      
+      // Try to fetch from backend API first
+      console.log("Loading scan history from backend API");
+      try {
+        const response = await fetch('/api/v1/scans?limit=100');
+        if (response.ok) {
+          const backendScans = await response.json();
+          console.log("Backend scans loaded:", backendScans.length);
+          
+          setTimeout(() => {
+            setState(prev => ({
+              ...prev,
+              scans: (backendScans as BackendScanData[]).map((scan) => ({
+                id: scan.id || String(scan._id || ''),
+                medicine: scan.medicine || 'Unknown',
+                status: scan.status || 'unknown',
+                confidence: scan.confidence || '0%',
+                batch_number: scan.batch_number || null,
+                expiry_date: scan.expiry_date || null,
+                extracted_text: scan.extracted_text || '',
+                extraction_method: scan.extraction_method || 'backend',
+                processing_time: scan.processing_time || 'N/A',
+                extraction_confidence: scan.extraction_confidence || null,
+                reason: scan.reason || 'Backend scan',
+                fake_indicators: scan.fake_indicators || [],
+                timestamp: scan.timestamp || new Date().toISOString(),
+                file_name: scan.file_name || 'backend-scan'
+              })),
+              error: null,
+              loading: false
+            }));
+          }, 0);
+          return;
+        }
+      } catch (backendError) {
+        console.log("Backend fetch failed, falling back to local storage:", backendError);
+      }
+      
+      // Fallback to local storage
+      console.log("Loading scan history from local storage (fallback)");
+      const localHistory = getFullScanHistory();
+      
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          scans: localHistory.map((scan, index) => ({
+            id: String(scan.scan_id || `local-${index}`),
+            medicine: String(scan.medicine || ''),
+            status: String(scan.status || ''),
+            confidence: String(scan.confidence || ''),
+            batch_number: null,
+            expiry_date: null,
+            extracted_text: '',
+            extraction_method: 'local',
+            processing_time: 'N/A',
+            extraction_confidence: null,
+            reason: `Scan from ${scan.location || 'Pune'}`,
+            fake_indicators: [],
+            timestamp: String(scan.timestamp || new Date().toISOString()),
+            file_name: 'local-scan'
+          })),
+          error: null,
+          loading: false
+        }));
+      }, 0);
+      
+    } catch (error) {
+      console.error("Error loading scan history:", error);
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          error: "Failed to load scan history",
+          loading: false
+        }));
+      }, 0);
+    }
+  }, []);
+
+  const fetchTrends = useCallback(async () => {
+    try {
+      console.log("Generating trends from local storage");
+      const localHistory = getFullScanHistory();
+      
+      // Generate trends from local data
+      const medicineCounts: Record<string, number> = {};
+      const suspiciousCounts: Record<string, number> = {};
+      const medicineData: Record<string, { confidence: number[]; timestamp: string }> = {};
+      
+      localHistory.forEach((scan: StorageScanData) => {
+        const medicine = String(scan.medicine || '').toLowerCase();
+        const status = String(scan.status || '').toLowerCase();
+        const confidence = parseFloat(String(scan.confidence || '0'));
+        const timestamp = String(scan.timestamp || new Date().toISOString());
+        
+        medicineCounts[medicine] = (medicineCounts[medicine] || 0) + 1;
+        
+        if (!medicineData[medicine]) {
+          medicineData[medicine] = { confidence: [], timestamp };
+        }
+        medicineData[medicine].confidence.push(confidence);
+        
+        if (status === 'fake' || status === 'counterfeit') {
+          suspiciousCounts[medicine] = (suspiciousCounts[medicine] || 0) + 1;
+        }
+      });
+      
+      // Sort by count and get top 5
+      const mostFrequent: TrendData[] = Object.entries(medicineCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([medicine, count]) => ({
+          medicine,
+          scan_count: count,
+          avg_confidence: medicineData[medicine]?.confidence.reduce((a, b) => a + b, 0) / medicineData[medicine].confidence.length || 0,
+          latest_scan: medicineData[medicine]?.timestamp || new Date().toISOString()
+        }));
+      
+      const mostSuspicious: TrendData[] = Object.entries(suspiciousCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([medicine, suspiciousCount]) => ({
+          medicine,
+          total_scans: medicineCounts[medicine] || 0,
+          fake_scans: suspiciousCount,
+          suspicious_scans: suspiciousCount,
+          suspicious_ratio: suspiciousCount / (medicineCounts[medicine] || 1),
+          avg_confidence: medicineData[medicine]?.confidence.reduce((a, b) => a + b, 0) / medicineData[medicine].confidence.length || 0,
+          latest_scan: medicineData[medicine]?.timestamp || new Date().toISOString()
+        }));
+      
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          trends: {
+            most_frequent: mostFrequent,
+            most_suspicious: mostSuspicious,
+            last_updated: new Date().toISOString()
+          }
+        }));
+      }, 0);
+
+      console.log("Trends generated from local data:", { mostFrequent, mostSuspicious });
+
+    } catch (error) {
+      console.error("Error generating trends:", error);
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          trends: {
+            most_frequent: [],
+            most_suspicious: [],
+            last_updated: new Date().toISOString()
+          }
+        }));
+      }, 0);
+    }
+  }, []);
 
   // Fetch scan history on mount and set up real-time updates
   useEffect(() => {
@@ -162,155 +354,22 @@ export default function DashboardPage() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('newScan', handleCustomEvent);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchScanHistory, fetchTrends]);
 
   // Filter scans based on search term
   useEffect(() => {
-    if (state.searchTerm.trim() === "") {
-      setState(prev => ({ ...prev, filteredScans: prev.scans }));
-    } else {
-      const filtered = state.scans.filter(scan =>
-        scan.medicine.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-        scan.status.toLowerCase().includes(state.searchTerm.toLowerCase())
-      );
-      setState(prev => ({ ...prev, filteredScans: filtered }));
-    }
-  }, [state.searchTerm, state.scans]);
-
-  const fetchScanHistory = async (retryCount = 0) => {
-    const maxRetries = 3;
-    
-    try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-
-      // Add timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      const response = await fetch(`http://127.0.0.1:8001/api/v1/scans?limit=50&_t=${timestamp}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Scan service not available');
-        } else if (response.status >= 500) {
-          throw new Error('Server error - please try again');
-        } else {
-          throw new Error(`Failed to fetch scan history: ${response.status}`);
-        }
-      }
-
-      const data = await response.json();
-      // Handle different response formats
-      let scans: ScanHistory[] = [];
-      
-      if (Array.isArray(data)) {
-        // Direct array response
-        scans = data;
-      } else if (data.scans && Array.isArray(data.scans)) {
-        // Wrapped in scans property
-        scans = data.scans;
-      } else if (data.data && Array.isArray(data.data)) {
-        // Wrapped in data property
-        scans = data.data;
+    setTimeout(() => {
+      if (state.searchTerm.trim() === "") {
+        setState(prev => ({ ...prev, filteredScans: prev.scans }));
       } else {
-        console.warn('Unexpected API response format:', data);
-        scans = [];
+        const filtered = state.scans.filter(scan =>
+          scan.medicine.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+          scan.status.toLowerCase().includes(state.searchTerm.toLowerCase())
+        );
+        setState(prev => ({ ...prev, filteredScans: filtered }));
       }
-      
-      // Calculate stats
-      const stats = {
-        totalScans: scans.length,
-        realScans: scans.filter(s => s.status.toLowerCase() === 'real').length,
-        fakeScans: scans.filter(s => s.status.toLowerCase() === 'fake').length,
-        suspiciousScans: scans.filter(s => s.status.toLowerCase() === 'suspicious').length,
-        avgConfidence: scans.length > 0 
-          ? scans.reduce((sum, scan) => {
-              const conf = parseFloat(scan.confidence.replace('%', ''));
-              return sum + (isNaN(conf) ? 0 : conf);
-            }, 0) / scans.length
-          : 0
-      };
-
-      setState(prev => ({
-        ...prev,
-        scans,
-        filteredScans: prev.searchTerm.trim() === "" ? scans : prev.filteredScans,
-        stats,
-        loading: false,
-        error: null
-      }));
-
-      console.log("Dashboard loaded:", scans.length, "scans");
-
-    } catch (error) {
-      console.error("Error fetching scan history:", error);
-      
-      // Retry logic
-      if (retryCount < maxRetries) {
-        console.log(`Retrying... Attempt ${retryCount + 1}/${maxRetries}`);
-        setTimeout(() => fetchScanHistory(retryCount + 1), 2000 * (retryCount + 1));
-        return;
-      }
-      
-      setState(prev => ({
-        ...prev,
-        error: typeof error === 'string' ? error : "Failed to load scan history",
-        loading: false
-      }));
-    }
-  };
-
-  const fetchTrends = async (retryCount = 0) => {
-    const maxRetries = 3;
-    
-    try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`http://127.0.0.1:8001/api/v1/trends?_t=${timestamp}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.warn('Trends endpoint not available');
-          return;
-        } else if (response.status >= 500) {
-          throw new Error('Server error - please try again');
-        } else {
-          throw new Error(`Failed to fetch trends: ${response.status}`);
-        }
-      }
-
-      const trends = await response.json();
-      
-      setState(prev => ({
-        ...prev,
-        trends: {
-          most_frequent: trends.most_frequent || [],
-          most_suspicious: trends.most_suspicious || [],
-          last_updated: trends.last_updated || new Date().toISOString()
-        }
-      }));
-
-      console.log("Trends loaded:", trends);
-
-    } catch (error) {
-      console.error("Error fetching trends:", error);
-      
-      // Retry logic for trends
-      if (retryCount < maxRetries) {
-        console.log(`Retrying trends... Attempt ${retryCount + 1}/${maxRetries}`);
-        setTimeout(() => fetchTrends(retryCount + 1), 2000 * (retryCount + 1));
-      }
-    }
-  };
+    }, 0);
+  }, [state.searchTerm, state.scans]);
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
