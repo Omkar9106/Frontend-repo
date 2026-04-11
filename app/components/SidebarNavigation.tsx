@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { FiHome, FiBarChart2, FiPackage, FiFileText, FiActivity, FiCamera, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface NavItem {
   id: string;
@@ -61,6 +61,18 @@ export default function SidebarNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -69,6 +81,11 @@ export default function SidebarNavigation() {
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  // Don't render sidebar on mobile
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <div className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 border-r border-cyan-500/20 transition-all duration-300 z-50 ${

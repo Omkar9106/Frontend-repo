@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { FiClock, FiAlertCircle, FiRefreshCw, FiSearch, FiTrendingUp, FiActivity, FiShield, FiCheckCircle, FiXCircle, FiAlertTriangle } from "react-icons/fi";
+import { FiAlertCircle, FiRefreshCw, FiTrendingUp, FiActivity, FiShield, FiAlertTriangle } from "react-icons/fi";
 import { getFullScanHistory } from "../utils/storage";
 
 // API Response interface
@@ -81,6 +81,7 @@ interface DashboardState {
     avgConfidence: number;
   };
   trends: Trends;
+  dataSource: 'backend' | 'local' | 'unknown';
 }
 
 export default function DashboardPage() {
@@ -102,7 +103,8 @@ export default function DashboardPage() {
       most_frequent: [],
       most_suspicious: [],
       last_updated: ""
-    }
+    },
+    dataSource: 'unknown'
   });
 
   const fetchScanHistory = useCallback(async () => {
@@ -112,10 +114,10 @@ export default function DashboardPage() {
         setState(prev => ({ ...prev, loading: true, error: null }));
       }, 0);
       
-      // Try to fetch from backend API first
-      console.log("Loading scan history from backend API");
+      // Try to fetch from backend API first using proxy
+      console.log("Loading scan history from backend API via proxy");
       try {
-        const response = await fetch('/api/v1/scans?limit=100');
+        const response = await fetch('/api/proxy?path=/api/v1/scans?limit=100');
         if (response.ok) {
           const backendScans = await response.json();
           console.log("Backend scans loaded:", backendScans.length);
@@ -140,7 +142,8 @@ export default function DashboardPage() {
                 file_name: scan.file_name || 'backend-scan'
               })),
               error: null,
-              loading: false
+              loading: false,
+              dataSource: 'backend'
             }));
           }, 0);
           return;
@@ -173,7 +176,8 @@ export default function DashboardPage() {
             file_name: 'local-scan'
           })),
           error: null,
-          loading: false
+          loading: false,
+          dataSource: 'local'
         }));
       }, 0);
       
@@ -297,8 +301,15 @@ export default function DashboardPage() {
       console.log('Storage event received:', e);
       if (e.key === 'newScanAdded' || e.key === 'scanResult') {
         console.log('New scan detected, refreshing dashboard...');
+        // Immediate refresh
         fetchScanHistory();
         fetchTrends();
+        // Also refresh after a short delay to ensure backend is updated
+        setTimeout(() => {
+          console.log('Delayed refresh after scan...');
+          fetchScanHistory();
+          fetchTrends();
+        }, 2000);
       }
     };
     
@@ -307,13 +318,29 @@ export default function DashboardPage() {
       console.log('Custom event received:', event);
       if (event.type === 'newScan') {
         console.log('New scan custom event detected, refreshing dashboard...');
+        // Immediate refresh
         fetchScanHistory();
         fetchTrends();
+        // Also refresh after a short delay to ensure backend is updated
+        setTimeout(() => {
+          console.log('Delayed refresh after custom event...');
+          fetchScanHistory();
+          fetchTrends();
+        }, 2000);
       }
     };
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('newScan', handleCustomEvent);
+    
+    // Listen for direct dashboard refresh events
+    const handleDashboardRefresh = () => {
+      console.log('Direct dashboard refresh event received');
+      fetchScanHistory();
+      fetchTrends();
+    };
+    
+    window.addEventListener('dashboardRefresh', handleDashboardRefresh);
     
     // Also check for direct sessionStorage changes (smarter approach)
     let lastKnownTimestamp = 0;
@@ -345,16 +372,26 @@ export default function DashboardPage() {
       }
     };
     
-    // Check sessionStorage every 5 seconds (reduced frequency)
-    const storageInterval = setInterval(checkSessionStorage, 5000);
+    // Check sessionStorage every 2 seconds for better responsiveness
+    const storageInterval = setInterval(checkSessionStorage, 2000);
     
     return () => {
       clearInterval(interval);
       clearInterval(storageInterval);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('newScan', handleCustomEvent);
+      window.removeEventListener('dashboardRefresh', handleDashboardRefresh);
     };
   }, [fetchScanHistory, fetchTrends]);
+
+  const formatDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   // Filter scans based on search term
   useEffect(() => {
@@ -370,62 +407,6 @@ export default function DashboardPage() {
       }
     }, 0);
   }, [state.searchTerm, state.scans]);
-
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'real':
-        return 'status-authentic';
-      case 'fake':
-        return 'status-counterfeit';
-      case 'suspicious':
-        return 'status-suspicious';
-      default:
-        return '';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'real':
-        return <FiCheckCircle className="w-4 h-4" />;
-      case 'fake':
-        return <FiXCircle className="w-4 h-4" />;
-      case 'suspicious':
-        return <FiAlertTriangle className="w-4 h-4" />;
-      default:
-        return <FiAlertCircle className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'real':
-        return 'text-emerald-400';
-      case 'fake':
-        return 'text-red-400';
-      case 'suspicious':
-        return 'text-amber-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleScanClick = (scanId: string) => {
-    const scan = state.scans.find(s => s.id === scanId);
-    if (scan) {
-      sessionStorage.setItem('scanResult', JSON.stringify(scan));
-      router.push('/result');
-    }
-  };
 
   if (state.loading) {
     return (
@@ -471,6 +452,28 @@ export default function DashboardPage() {
     );
   }
 
+  if (state.scans.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="relative w-24 h-24 mx-auto mb-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full animate-pulse-emerald"></div>
+          <div className="absolute inset-2 bg-gradient-to-br from-emerald-600 to-blue-600 rounded-full flex items-center justify-center">
+            <FiActivity className="w-12 h-12 text-white animate-pulse" />
+          </div>
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-4">No Scans Yet</h3>
+        <p className="text-gray-400 mb-8">Start scanning medicines to see your results here</p>
+        <button
+          onClick={() => router.push('/scan')}
+          className="btn-classic px-8 py-4 flex items-center gap-3 mx-auto text-lg"
+        >
+          <FiActivity className="w-5 h-5" />
+          Start Your First Scan
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
@@ -499,64 +502,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
-          <div className="card-classic p-6 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <FiActivity className="w-6 h-6 text-blue-400" />
-              </div>
-              <div className="text-3xl font-bold text-blue-400 mb-2">{state.stats.totalScans}</div>
-              <div className="text-gray-300 text-sm">Total Scans</div>
-            </div>
-          </div>
-
-          <div className="card-classic p-6 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-green-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <FiCheckCircle className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div className="text-3xl font-bold text-emerald-400 mb-2">{state.stats.realScans}</div>
-              <div className="text-gray-300 text-sm">Authentic</div>
-            </div>
-          </div>
-
-          <div className="card-classic p-6 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <FiXCircle className="w-6 h-6 text-red-400" />
-              </div>
-              <div className="text-3xl font-bold text-red-400 mb-2">{state.stats.fakeScans}</div>
-              <div className="text-gray-300 text-sm">Counterfeit</div>
-            </div>
-          </div>
-
-          <div className="card-classic p-6 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <FiAlertTriangle className="w-6 h-6 text-amber-400" />
-              </div>
-              <div className="text-3xl font-bold text-amber-400 mb-2">{state.stats.suspiciousScans}</div>
-              <div className="text-gray-300 text-sm">Suspicious</div>
-            </div>
-          </div>
-
-          <div className="card-classic p-6 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <FiTrendingUp className="w-6 h-6 text-purple-400" />
-              </div>
-              <div className="text-3xl font-bold text-purple-400 mb-2">{state.stats.avgConfidence.toFixed(1)}%</div>
-              <div className="text-gray-300 text-sm">Avg Confidence</div>
-            </div>
-          </div>
-        </div>
-
+        
         {/* Trends Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
           {/* Most Frequently Scanned */}
@@ -648,19 +594,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Quick Actions */}
         <div className="glass-morphism p-8 rounded-2xl mb-10">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={state.searchTerm}
-                onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
-                placeholder="Search by medicine name, status, or confidence..."
-                className="input-classic w-full pl-14 pr-4 py-4 text-lg"
-              />
-            </div>
+          <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => {
                 fetchScanHistory();
@@ -670,133 +606,19 @@ export default function DashboardPage() {
               title="Refresh dashboard data"
             >
               <FiRefreshCw className="w-4 h-4" />
-              Refresh
+              Refresh Data
             </button>
             <button
               onClick={() => router.push('/scan')}
               className="btn-classic px-8 py-4 flex items-center gap-3 text-lg"
             >
               <FiActivity className="w-5 h-5" />
-              New Scan
+              Start New Scan
             </button>
           </div>
         </div>
 
-        {/* Scan History */}
-        {state.filteredScans.length === 0 ? (
-          <div className="glass-morphism p-16 rounded-2xl text-center">
-            <div className="relative w-24 h-24 mx-auto mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-500/20 to-gray-600/20 rounded-full"></div>
-              <div className="absolute inset-2 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
-                <FiClock className="w-12 h-12 text-gray-400" />
               </div>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">No Scans Found</h3>
-            <p className="text-gray-300 text-lg mb-8 max-w-md mx-auto">
-              {state.searchTerm ? 'No scans match your search criteria. Try adjusting your search terms.' : 'No scans have been performed yet. Start your first scan to see results here.'}
-            </p>
-            <button
-              onClick={() => router.push('/scan')}
-              className="btn-classic px-8 py-4 flex items-center gap-3 mx-auto text-lg"
-            >
-              <FiActivity className="w-5 h-5" />
-              Start Your First Scan
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <FiClock className="w-6 h-6 text-emerald-400" />
-                Recent Scans ({state.filteredScans.length})
-              </h2>
-              <div className="text-gray-400">
-                Last updated: {formatDate(state.scans[0]?.timestamp || new Date().toISOString())}
-              </div>
-            </div>
-            
-            <div className="grid gap-6">
-              {state.filteredScans.map((scan, index) => (
-                <div
-                  key={scan.id}
-                  onClick={() => handleScanClick(scan.id)}
-                  className="card-classic p-8 cursor-pointer group relative overflow-hidden"
-                  style={{
-                    animation: `slideIn 0.5s ease-out ${index * 0.1}s both`
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">
-                          {scan.medicine}
-                        </h3>
-                        <div className="flex items-center gap-4 mb-4">
-                          <span className={`status-badge-classic ${getStatusBadge(scan.status)} flex items-center gap-2 text-sm`}>
-                            {getStatusIcon(scan.status)}
-                            {scan.status.toUpperCase()}
-                          </span>
-                          <span className={`text-lg font-semibold ${getStatusColor(scan.status)}`}>
-                            {scan.confidence}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-gray-400 text-sm mb-2">
-                          {formatDate(scan.timestamp)}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          {scan.processing_time}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      {scan.batch_number && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">Batch:</span>
-                          <span className="text-white font-medium">{scan.batch_number}</span>
-                        </div>
-                      )}
-                      {scan.expiry_date && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">Expiry:</span>
-                          <span className="text-white font-medium">{scan.expiry_date}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Method:</span>
-                        <span className="text-white font-medium">{scan.extraction_method}</span>
-                      </div>
-                    </div>
-
-                    {scan.fake_indicators && scan.fake_indicators.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-700">
-                        <div className="text-gray-400 text-sm mb-2">Indicators:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {scan.fake_indicators.map((indicator, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-xs">
-                              {indicator}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                        <FiActivity className="w-4 h-4 text-emerald-400" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

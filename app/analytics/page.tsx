@@ -63,8 +63,8 @@ export default function AnalyticsPage() {
       console.log('Fetching analytics through Next.js rewrites...');
       
       try {
-        console.log('Fetching /api/v1/stats...');
-        response = await fetch('/api/v1/stats', {
+        console.log('Fetching /api/proxy?path=/api/v1/stats through Next.js API route...');
+        response = await fetch('/api/proxy?path=/api/v1/stats', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -74,7 +74,16 @@ export default function AnalyticsPage() {
         console.log(`Response received: ${response.status} ${response.statusText}`);
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          // Try to get more error details
+          let errorDetails = '';
+          try {
+            const errorText = await response.text();
+            errorDetails = ` - Details: ${errorText}`;
+            console.error('Error response body:', errorText);
+          } catch (e) {
+            console.error('Could not read error response body:', e);
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}${errorDetails}`);
         }
         
         console.log('Successfully connected to backend through Next.js rewrite');

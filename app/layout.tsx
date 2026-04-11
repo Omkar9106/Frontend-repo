@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./styles/animations.css";
-import "./styles/mobile.css";
+import "../styles/animations.css";
 import SidebarNavigation from "./components/SidebarNavigation";
 import MobileNavigation from "./components/MobileNavigation";
 import { AlertProvider } from "./contexts/AlertContext";
 import { AlertBanner } from "./components/AlertBanner";
+import ResponsiveTest from "./components/ResponsiveTest";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,11 +21,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Health Surveillance System",
   description: "Advanced AI-powered health surveillance system for medicine verification, counterfeit detection, and public health monitoring.",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
-  manifest: "/manifest.json",
+  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
 };
 
 export default function RootLayout({
@@ -43,9 +39,6 @@ export default function RootLayout({
         {/* Alert Banner - Fixed at top */}
         <AlertBanner />
         
-        {/* Mobile Navigation */}
-        <MobileNavigation />
-        
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-500/10 rounded-full mix-blend-multiply filter blur-xl floating-orb"></div>
@@ -56,15 +49,12 @@ export default function RootLayout({
         </div>
         
         <div className="relative z-10 flex flex-1">
-          {/* Desktop Sidebar */}
-          <div className="hidden lg:block">
-            <SidebarNavigation />
-          </div>
-          
-          {/* Main Content */}
-          <main className="flex-1 lg:ml-64 transition-all duration-300 pt-16 lg:pt-0 pb-16 lg:pb-0">
+          <MobileNavigation />
+          <SidebarNavigation />
+          <main className="flex-1 ml-0 md:ml-64 transition-all duration-300 pt-16 md:pt-0">
             {children}
           </main>
+          <ResponsiveTest />
         </div>
       </AlertProvider>
     </body>

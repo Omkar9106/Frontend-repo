@@ -256,7 +256,7 @@ export default function ScanPage() {
           
           console.log('Save data prepared:', saveData);
           
-          const saveResponse = await fetch('/api/v1/save-scan', {
+          const saveResponse = await fetch('/api/proxy?path=/api/v1/save-scan', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -269,10 +269,26 @@ export default function ScanPage() {
           if (saveResponse.ok) {
             const saveResult = await saveResponse.json();
             console.log('Scan successfully saved to backend database:', saveResult);
-            // Notify dashboard that new scan was added
+            
+            // Trigger immediate dashboard refresh
             const timestamp = Date.now().toString();
             sessionStorage.setItem('newScanAdded', timestamp);
             sessionStorage.setItem('lastScanTimestamp', timestamp);
+            
+            // Send multiple refresh signals to ensure dashboard updates
+            window.dispatchEvent(new StorageEvent('newScanAdded', {
+              key: 'newScanAdded',
+              newValue: timestamp
+            }));
+            
+            window.dispatchEvent(new CustomEvent('newScan', {
+              detail: { timestamp, result }
+            }));
+            
+            // Also trigger a direct refresh event
+            window.dispatchEvent(new Event('dashboardRefresh'));
+            
+            console.log('Dashboard refresh signals sent');
           } else {
             const errorText = await saveResponse.text();
             console.error('Failed to save scan to backend:', saveResponse.status, errorText);

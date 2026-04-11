@@ -25,36 +25,10 @@ app.include_router(history_router)
 app.include_router(scan_router)
 app.include_router(medicines_router)
 
-# Configure CORS for development and production
-def get_cors_origins():
-    """Get allowed origins based on environment"""
-    origins = [
-        "http://localhost:3000", "http://127.0.0.1:3000",
-        "http://localhost:8001", "http://127.0.0.1:8001",
-        "http://localhost:3001", "http://127.0.0.1:3001",
-        "http://localhost:3020", "http://127.0.0.1:3020"
-    ]
-    
-    # Add production domains for Render
-    if os.environ.get('RENDER') == 'true':
-        # Allow all Render subdomains and custom domains
-        render_service_url = os.environ.get('RENDER_SERVICE_URL', '')
-        if render_service_url:
-            origins.append(render_service_url)
-            origins.append(render_service_url.replace('https://', 'http://'))  # Also allow HTTP
-        
-        # Common Render patterns
-        origins.extend([
-            "https://*.onrender.com",
-            "https://*.render.com"
-        ])
-    
-    return origins
-
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_cors_origins(),
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8001", "http://127.0.0.1:8001", "http://localhost:3001", "http://127.0.0.1:3001", "http://localhost:3020", "http://127.0.0.1:3020"],  # Next.js and testing ports
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,35 +62,11 @@ elif platform.system() == "Darwin":  # macOS
         print("[WARNING] Tesseract not found at /usr/local/bin/tesseract")
         print("[INFO] Install with: brew install tesseract")
 else:  # Linux
-    # Check for Render.com deployment environment
-    if os.environ.get('RENDER') == 'true' or os.environ.get('RENDER_SERVICE_ID'):
-        print("[DEPLOYMENT] Detected Render.com environment")
-    
-    # Set Tesseract path for Linux (Render deployment)
     if os.path.exists('/usr/bin/tesseract'):
-        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
         print("[TESSERACT] Found at: /usr/bin/tesseract")
-        
-        # Additional check for Tesseract data directory
-        tessdata_paths = [
-            '/usr/share/tesseract-ocr/4.00/tessdata',
-            '/usr/share/tesseract-ocr/tessdata',
-            '/usr/share/tessdata'
-        ]
-        tessdata_found = False
-        for path in tessdata_paths:
-            if os.path.exists(path):
-                os.environ['TESSDATA_PREFIX'] = path.replace('/tessdata', '')
-                print(f"[TESSERACT] Tessdata directory found: {path}")
-                tessdata_found = True
-                break
-        
-        if not tessdata_found:
-            print("[WARNING] Tesseract tessdata directory not found in standard locations")
     else:
         print("[WARNING] Tesseract not found at /usr/bin/tesseract")
         print("[INFO] Install with: sudo apt-get install tesseract-ocr")
-        print("[INFO] For Render deployment, ensure build.sh installs Tesseract")
 
 # Test Tesseract availability
 try:
@@ -127,49 +77,6 @@ except Exception as e:
     print(f"[ERROR] Tesseract not available: {e}")
     print("[ERROR] OCR will not work without Tesseract!")
     TESSERACT_AVAILABLE = False
-
-def fallback_ocr_response(image_info: str = "unknown"):
-    """Fallback response when Tesseract is not available"""
-    return JSONResponse(content={
-        "medicine": "Unknown",
-        "status": "unknown",
-        "confidence": "0%",
-        "batch_number": None,
-        "expiry_date": None,
-        "extracted_text": "",
-        "extraction_method": "fallback",
-        "processing_time": "0s",
-        "extraction_confidence": None,
-        "reason": f"OCR service unavailable - Tesseract not installed or not working. Image info: {image_info}",
-        "fake_indicators": ["OCR service unavailable"],
-        "timestamp": datetime.now().isoformat(),
-        "file_name": None,
-        "error": "OCR_ENGINE_UNAVAILABLE",
-        "fallback_used": True
-    })
-
-def safe_ocr_with_fallback(image, image_name: str = "unknown"):
-    """Perform OCR with comprehensive fallback handling"""
-    if not TESSERACT_AVAILABLE:
-        print("[FALLBACK] Using fallback response - Tesseract not available")
-        return fallback_ocr_response(image_name)
-    
-    try:
-        # Attempt OCR with Tesseract
-        print("[OCR] Attempting Tesseract OCR...")
-        text = pytesseract.image_to_string(image)
-        
-        if text and text.strip():
-            print(f"[OCR] Success: Extracted {len(text.strip())} characters")
-            return None  # Let normal processing continue
-        else:
-            print("[OCR] Warning: No text extracted, but Tesseract is working")
-            return None  # Let normal processing continue with empty text
-            
-    except Exception as ocr_error:
-        print(f"[OCR] Tesseract failed: {ocr_error}")
-        print("[FALLBACK] Using fallback response due to Tesseract error")
-        return fallback_ocr_response(image_name)
 
 # Production configuration
 @dataclass
@@ -516,6 +423,16 @@ async def health_check():
 async def test_endpoint():
     """Simple test endpoint that doesn't require database"""
     return {"message": "Backend is working!", "status": "ok", "timestamp": time.time()}
+
+@app.options("/api/v1/stats")
+async def options_stats():
+    """Handle OPTIONS preflight request for /api/v1/stats"""
+    return {"status": "ok"}
+
+@app.options("/api/{path:path}")
+async def options_api(path: str):
+    """Handle OPTIONS preflight requests for all API endpoints"""
+    return {"status": "ok"}
 
 @app.post("/test-ocr")
 async def test_ocr_simple(file: UploadFile = File(...)):
