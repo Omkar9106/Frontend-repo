@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiShield, FiCheckCircle, FiAlertCircle, FiDownload, FiShare2, FiClock, FiBarChart2, FiLoader, FiPackage, FiActivity, FiTrendingUp, FiInfo, FiAlertTriangle, FiList } from "react-icons/fi";
+import { FiShield, FiCheckCircle, FiAlertCircle, FiDownload, FiShare2, FiBarChart2, FiLoader, FiPackage, FiActivity, FiTrendingUp, FiInfo, FiAlertTriangle, FiList } from "react-icons/fi";
 import { CompactAlertBanner } from "../components/AlertBanner";
 import { getScanResult, getFullScanHistory } from "../utils/storage";
 
@@ -104,12 +104,7 @@ export default function ResultPage() {
     return () => clearTimeout(timeoutId);
   }, []); // Run only once on mount
 
-  const getStatusColor = (status: string) => {
-    return status.toLowerCase() === 'real' 
-      ? 'text-green-400 border-green-400/30 bg-green-400/10' 
-      : 'text-red-400 border-red-400/30 bg-red-400/10';
-  };
-
+  
   const getStatusIcon = (status: string) => {
     return status.toLowerCase() === 'real' 
       ? <FiCheckCircle className="w-6 h-6" /> 
