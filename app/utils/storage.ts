@@ -22,12 +22,17 @@ class StorageManager {
   }
 
   private checkStorageAvailability() {
+    // Only check storage availability on client-side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     try {
       // Check sessionStorage
-      if (typeof sessionStorage !== 'undefined') {
+      if (typeof window.sessionStorage !== 'undefined') {
         const testKey = '__storage_test__';
-        sessionStorage.setItem(testKey, 'test');
-        sessionStorage.removeItem(testKey);
+        window.sessionStorage.setItem(testKey, 'test');
+        window.sessionStorage.removeItem(testKey);
         this.isSessionStorageAvailable = true;
       }
     } catch (error) {
@@ -37,10 +42,10 @@ class StorageManager {
 
     try {
       // Check localStorage
-      if (typeof localStorage !== 'undefined') {
+      if (typeof window.localStorage !== 'undefined') {
         const testKey = '__storage_test__';
-        localStorage.setItem(testKey, 'test');
-        localStorage.removeItem(testKey);
+        window.localStorage.setItem(testKey, 'test');
+        window.localStorage.removeItem(testKey);
         this.isLocalStorageAvailable = true;
       }
     } catch (error) {
@@ -50,9 +55,13 @@ class StorageManager {
   }
 
   setItem(key: string, value: string): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
     try {
-      if (this.isSessionStorageAvailable) {
-        sessionStorage.setItem(key, value);
+      if (this.isSessionStorageAvailable && window.sessionStorage) {
+        window.sessionStorage.setItem(key, value);
         return true;
       }
     } catch (error) {
@@ -60,8 +69,8 @@ class StorageManager {
     }
 
     try {
-      if (this.isLocalStorageAvailable) {
-        localStorage.setItem(key, value);
+      if (this.isLocalStorageAvailable && window.localStorage) {
+        window.localStorage.setItem(key, value);
         return true;
       }
     } catch (error) {
@@ -72,17 +81,21 @@ class StorageManager {
   }
 
   getItem(key: string): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
     try {
-      if (this.isSessionStorageAvailable) {
-        return sessionStorage.getItem(key);
+      if (this.isSessionStorageAvailable && window.sessionStorage) {
+        return window.sessionStorage.getItem(key);
       }
     } catch (error) {
       console.warn('SessionStorage getItem failed:', error);
     }
 
     try {
-      if (this.isLocalStorageAvailable) {
-        return localStorage.getItem(key);
+      if (this.isLocalStorageAvailable && window.localStorage) {
+        return window.localStorage.getItem(key);
       }
     } catch (error) {
       console.warn('LocalStorage getItem failed:', error);
@@ -92,9 +105,13 @@ class StorageManager {
   }
 
   removeItem(key: string): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
     try {
-      if (this.isSessionStorageAvailable) {
-        sessionStorage.removeItem(key);
+      if (this.isSessionStorageAvailable && window.sessionStorage) {
+        window.sessionStorage.removeItem(key);
         return true;
       }
     } catch (error) {
@@ -102,8 +119,8 @@ class StorageManager {
     }
 
     try {
-      if (this.isLocalStorageAvailable) {
-        localStorage.removeItem(key);
+      if (this.isLocalStorageAvailable && window.localStorage) {
+        window.localStorage.removeItem(key);
         return true;
       }
     } catch (error) {

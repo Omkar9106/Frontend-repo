@@ -182,7 +182,7 @@ export default function SidebarNavigation() {
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-cyan-500/20">
         <div className={`text-center ${isCollapsed ? "hidden" : ""}`}>
-          <p className="text-xs text-gray-400">© 2024 AI Health Surveillance System</p>
+          <p className="text-xs text-gray-400">© 2026 AI Health Surveillance System</p>
           <p className="text-xs text-gray-500">AI Health Surveillance System</p>
         </div>
         {isCollapsed && (

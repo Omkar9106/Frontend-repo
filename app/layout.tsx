@@ -21,7 +21,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Health Surveillance System",
   description: "Advanced AI-powered health surveillance system for medicine verification, counterfeit detection, and public health monitoring.",
-  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false,
 };
 
 export default function RootLayout({
