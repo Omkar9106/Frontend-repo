@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const path = url.searchParams.get('path') || '';
   
   try {
-    const backendUrl = `http://127.0.0.1:8001${path}`;
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}${path}`;
     console.log('Proxying request to:', backendUrl);
     
     const response = await fetch(backendUrl, {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.text();
-    const backendUrl = `http://127.0.0.1:8001${path}`;
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}${path}`;
     
     console.log('Proxying POST request to:', backendUrl);
     
